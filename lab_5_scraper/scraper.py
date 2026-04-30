@@ -13,6 +13,20 @@ from bs4 import BeautifulSoup, Tag
 from core_utils.article.article import Article
 from core_utils.config_dto import ConfigDTO
 
+class IncorrectSeedURLError(Exception):
+    pass
+class NumberOfArticlesOutOfRangeError(Exception):
+    pass
+class IncorrectNumberOfArticlesError(Exception):
+    pass
+class IncorrectHeadersError(Exception):
+    pass
+class IncorrectEncodingError(Exception):
+    pass
+class IncorrectTimeoutError(Exception):
+    pass
+class IncorrectVerifyError(Exception):
+    pass
 
 class Config:
     """
@@ -26,6 +40,7 @@ class Config:
         Args:
             path_to_config (pathlib.Path): Path to configuration.
         """
+        self.path_to_config = path_to_config
 
     def _extract_config_content(self) -> ConfigDTO:
         """
@@ -34,11 +49,20 @@ class Config:
         Returns:
             ConfigDTO: Config values
         """
+        with open(self.path_to_config, "r", encoding = "utf-8") as f:
+            data = json.load(f)
+        return ConfigDTO(**data)
 
     def _validate_config_content(self) -> None:
         """
         Ensure configuration parameters are not corrupt.
         """
+        dto = self._extract_config_content()
+        if not isinstance(dto.seed_urls, list):
+            raise IncorrectSeedURLError("seed_urls should be a list")
+        pattern = "https?://(www.)?"
+        if pattern not in dto.seed_urls:
+            raise IncorrectSeedURLError("seed URL does not match standard pattern")
 
     def get_seed_urls(self) -> list[str]:
         """
